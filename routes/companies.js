@@ -11,6 +11,7 @@ const Company = require("../models/company");
 
 const companyNewSchema = require("../schemas/companyNew.json");
 const companyUpdateSchema = require("../schemas/companyUpdate.json");
+const companySearchSchema = require("../schemas/companySearch.json");
 
 const router = new express.Router();
 
@@ -52,13 +53,34 @@ router.post("/", ensureAdmin, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
+  // Extract query parameters from the HTTP request
+  const query = req.query;
+
+  // Convert minEmployees and maxEmployees to integers if they are defined as strings
+  if (query.minEmployees !== undefined) query.minEmployees = +query.minEmployees;
+  if (query.maxEmployees !== undefined) query.maxEmployees = +query.maxEmployees;
+
   try {
-    const companies = await Company.findAll();
+    // Validate the query parameters against the companySearchSchema
+    const validators = jsonschema.validate(query, companySearchSchema);
+
+    // If validation fails, throw a BadRequestError with the validation errors
+    if (!validators.valid) {
+      const errs = validators.errors.map(e => e.stack);
+      throw new BadRequestError(errs);
+    }
+
+    // Retrieve companies from the database based on the provided query parameters
+    const companies = await Company.findAll(query);
+
+    // Return the list of companies as a JSON response
     return res.json({ companies });
   } catch (err) {
+    // Pass any caught errors to the error-handling middleware
     return next(err);
   }
 });
+
 
 /** GET /[handle]  =>  { company }
  *
@@ -85,10 +107,10 @@ router.get("/:handle", async function (req, res, next) {
  *
  * Returns { handle, name, description, numEmployees, logo_url }
  *
- * Authorization required: login
+ * Authorization required: admin
  */
 
-router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
+router.patch("/:handle", ensureAdmin, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, companyUpdateSchema);
     if (!validator.valid) {
@@ -105,10 +127,10 @@ router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
 
 /** DELETE /[handle]  =>  { deleted: handle }
  *
- * Authorization: login
+ * Authorization: admin
  */
 
-router.delete("/:handle", ensureLoggedIn, async function (req, res, next) {
+router.delete("/:handle", ensureAdmin, async function (req, res, next) {
   try {
     await Company.remove(req.params.handle);
     return res.json({ deleted: req.params.handle });
