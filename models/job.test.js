@@ -45,20 +45,127 @@ describe("create", function () {
 
 
 /** 
- * Test the findAll method of the Job class 
+ * Test the findAll method of the Job class with different filters.
  */
-
 describe("findAll", function () {
-     // Test finding all jobs without any filters
+     // Test to ensure findAll works without any filters
      test("works: no filter", async function () {
-          let jobs = await Job.findAll({});
+          // Call findAll method without any filters
+          let jobs = await Job.findAll();
+          // Expect the returned jobs to match the expected array of jobs
           expect(jobs).toEqual([
-               // Array of expected job objects
+               {
+                    id: testJobIds[0],
+                    title: "Job1",
+                    salary: 100,
+                    equity: "0.1",
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
+               {
+                    id: testJobIds[1],
+                    title: "Job2",
+                    salary: 200,
+                    equity: "0.2",
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
+               {
+                    id: testJobIds[2],
+                    title: "Job3",
+                    salary: 300,
+                    equity: "0",
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
+               {
+                    id: testJobIds[3],
+                    title: "Job4",
+                    salary: null,
+                    equity: null,
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
           ]);
      });
 
-     // Additional tests for filtering by title, minSalary, hasEquity, and combinations
+     // Test to ensure findAll works with a minimum salary filter
+     test("works: by min salary", async function () {
+          // Call findAll method with a minimum salary filter of 250
+          let jobs = await Job.findAll({ minSalary: 250 });
+          // Expect the returned jobs to match the expected array of jobs
+          expect(jobs).toEqual([
+               {
+                    id: testJobIds[2],
+                    title: "Job3",
+                    salary: 300,
+                    equity: "0",
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
+          ]);
+     });
+
+     // Test to ensure findAll works with an equity filter
+     test("works: by equity", async function () {
+          // Call findAll method with an equity filter set to true
+          let jobs = await Job.findAll({ hasEquity: true });
+          // Expect the returned jobs to match the expected array of jobs
+          expect(jobs).toEqual([
+               {
+                    id: testJobIds[0],
+                    title: "Job1",
+                    salary: 100,
+                    equity: "0.1",
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
+               {
+                    id: testJobIds[1],
+                    title: "Job2",
+                    salary: 200,
+                    equity: "0.2",
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
+          ]);
+     });
+
+     // Test to ensure findAll works with both a minimum salary and equity filter
+     test("works: by min salary & equity", async function () {
+          // Call findAll method with both a minimum salary filter of 150 and an equity filter set to true
+          let jobs = await Job.findAll({ minSalary: 150, hasEquity: true });
+          // Expect the returned jobs to match the expected array of jobs
+          expect(jobs).toEqual([
+               {
+                    id: testJobIds[1],
+                    title: "Job2",
+                    salary: 200,
+                    equity: "0.2",
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
+          ]);
+     });
+
+     // Test to ensure findAll works with a title filter
+     test("works: by name", async function () {
+          // Call findAll method with a title filter set to "ob1"
+          let jobs = await Job.findAll({ title: "ob1" });
+          // Expect the returned jobs to match the expected array of jobs
+          expect(jobs).toEqual([
+               {
+                    id: testJobIds[0],
+                    title: "Job1",
+                    salary: 100,
+                    equity: "0.1",
+                    companyHandle: "c1",
+                    companyName: "C1",
+               },
+          ]);
+     });
 });
+
 
 
 /** 
@@ -66,24 +173,38 @@ describe("findAll", function () {
  */
 
 describe("get", function () {
-     // Test getting a job by ID
      test("works", async function () {
+          // Call get method with the ID of the first test job
           let job = await Job.get(testJobIds[0]);
+
           expect(job).toEqual({
-               // Expected job object
+               id: testJobIds[0],
+               title: "Job1",
+               salary: 100,
+               equity: "0.1",
+               // Expect the company details to be included in the job object
+               company: {
+                    handle: "c1",
+                    name: "C1",
+                    description: "Desc1",
+                    numEmployees: 1,
+                    logoUrl: "http://c1.img",
+               },
           });
      });
 
-     // Test for case when no job is found
      test("not found if no such job", async function () {
           try {
-               await Job.get(-1);
+               // Call get method with an invalid job ID (0)
+               await Job.get(0);
+               // If get method doesn't throw an error, fail the test
                fail();
           } catch (err) {
                expect(err instanceof NotFoundError).toBeTruthy();
           }
      });
-})
+});
+
 
 
 /** 
@@ -101,7 +222,9 @@ describe("update", function () {
      test("works", async function () {
           let job = await Job.update(testJobIds[0], updateData);
           expect(job).toEqual({
-               // Expected updated job object
+               id: testJobIds[0],
+               companyHandle: "c1",
+               ...updateData,
           });
      });
 
