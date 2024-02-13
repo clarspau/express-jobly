@@ -18,8 +18,7 @@ const badJwt = jwt.sign({ username: "test", isAdmin: false }, "wrong");
 describe("authenticateJWT", function () {
   test("works: via header", function () {
     expect.assertions(2);
-    //there are multiple ways to pass an authorization token, this is how you pass it in the header.
-    //this has been provided to show you another way to pass the token. you are only expected to read this code for this project.
+    // Ensure authentication token is passed through the header
     const req = { headers: { authorization: `Bearer ${testJwt}` } };
     const res = { locals: {} };
     const next = function (err) {
@@ -37,6 +36,7 @@ describe("authenticateJWT", function () {
 
   test("works: no header", function () {
     expect.assertions(2);
+    // Test scenario when no authorization header is provided
     const req = {};
     const res = { locals: {} };
     const next = function (err) {
@@ -48,6 +48,7 @@ describe("authenticateJWT", function () {
 
   test("works: invalid token", function () {
     expect.assertions(2);
+    // Test scenario when an invalid token is provided
     const req = { headers: { authorization: `Bearer ${badJwt}` } };
     const res = { locals: {} };
     const next = function (err) {
@@ -62,6 +63,7 @@ describe("authenticateJWT", function () {
 describe("ensureLoggedIn", function () {
   test("works", function () {
     expect.assertions(1);
+    // Test scenario when the user is logged in
     const req = {};
     const res = { locals: { user: { username: "test", is_admin: false } } };
     const next = function (err) {
@@ -72,6 +74,7 @@ describe("ensureLoggedIn", function () {
 
   test("unauth if no login", function () {
     expect.assertions(1);
+    // Test scenario when the user is not logged in
     const req = {};
     const res = { locals: {} };
     const next = function (err) {
@@ -85,6 +88,7 @@ describe("ensureLoggedIn", function () {
 describe("ensureAdmin", function () {
   test("works", function () {
     expect.assertions(1);
+    // Test scenario when the user is an admin
     const req = {};
     const res = { locals: { user: { username: "test", isAdmin: true } } };
     const next = function (err) {
@@ -95,6 +99,7 @@ describe("ensureAdmin", function () {
 
   test("unauth if not admin", function () {
     expect.assertions(1);
+    // Test scenario when the user is not an admin
     const req = {};
     const res = { locals: { user: { username: "test", isAdmin: false } } };
     const next = function (err) {
@@ -105,10 +110,11 @@ describe("ensureAdmin", function () {
 
   test("unauth if no login", function () {
     expect.assertions(1);
+    // Test scenario when the user is not logged in
     const req = {};
     const res = { locals: {} };
     const next = function (err) {
-      expect(err instanceof Unauthorizederror).toBeTruthy();
+      expect(err instanceof UnauthorizedError).toBeTruthy();
     };
     ensureAdmin(req, res, next);
   });
@@ -118,6 +124,7 @@ describe("ensureAdmin", function () {
 describe("ensureCorrectUserOrAdmin", function () {
   test("works: admin", function () {
     expect.assertions(1);
+    // Test scenario when the user is an admin
     const req = { params: { username: "test" } };
     const res = { locals: { user: { username: "admin", isAdmin: true } } };
     const next = function (err) {
@@ -128,6 +135,7 @@ describe("ensureCorrectUserOrAdmin", function () {
 
   test("works: correct user", function () {
     expect.assertions(1);
+    // Test scenario when the user is the correct user
     const req = { params: { username: "test" } };
     const res = { locals: { user: { username: "test", isAdmin: false } } };
     const next = function (err) {
@@ -138,6 +146,7 @@ describe("ensureCorrectUserOrAdmin", function () {
 
   test("unauth: incorrect user", function () {
     expect.assertions(1);
+    // Test scenario when the user is not the correct user or an admin
     const req = { params: { username: "wrong" } };
     const res = { locals: { user: { usrname: "test", isAdming: false } } };
     const next = function (err) {
@@ -148,8 +157,9 @@ describe("ensureCorrectUserOrAdmin", function () {
 
   test("unauth: no login", function () {
     expect.assertions(1);
+    // Test scenario when the user is not logged in
     const req = { params: { username: "test" } };
-    const req = { locals: {} };
+    const res = { locals: {} };
     const next = function (err) {
       expect(err instanceof UnauthorizedError).toBeTruthy();
     };
