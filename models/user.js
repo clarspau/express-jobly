@@ -115,17 +115,15 @@ class User {
     return result.rows;
   }
 
-  /** 
-   * Given a username, retrieve user data from the database.
+  /** Given a username, return data about user.
    *
-   * Returns an object containing user details.
-   * If the user is found, returns { username, first_name, last_name, is_admin, applications }
-   *   where applications is an array of job IDs the user has applied to.
-   * Throws a NotFoundError if the user is not found.
+   * Returns { username, first_name, last_name, is_admin, jobs }
+   *   where jobs is { id, title, company_handle, company_name, state }
+   *
+   * Throws NotFoundError if user not found.
    **/
 
   static async get(username) {
-    // Retrieve user data from the database based on the provided username
     const userRes = await db.query(
       `SELECT username,
                   first_name AS "firstName",
@@ -137,27 +135,18 @@ class User {
       [username],
     );
 
-    // Extract the user object from the query result
     const user = userRes.rows[0];
 
-    // If no user is found, throw a NotFoundError
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
-    // Retrieve the job applications associated with the user
     const userApplicationsRes = await db.query(
       `SELECT a.job_id
-      FROM applications AS a
-      WHERE a.username = $1`,
-      [username]
-    );
+           FROM applications AS a
+           WHERE a.username = $1`, [username]);
 
-    // Map the job IDs to an array and add it to the user object
     user.applications = userApplicationsRes.rows.map(a => a.job_id);
-
-    // Return the user object
     return user;
   }
-
 
   /** Update user data with `data`.
    *
@@ -222,41 +211,33 @@ class User {
     if (!user) throw new NotFoundError(`No user: ${username}`);
   }
 
-
-  /** Apply for job
- * 
- * username: username of the user applying for the job
- * jobId: id of the job being applied for
- */
+  /** Apply for job: update db, returns undefined.
+   *
+   * - username: username applying for job
+   * - jobId: job id
+   **/
 
   static async applyToJob(username, jobId) {
     const preCheck = await db.query(
       `SELECT id
-      FROM jobs
-      WHERE is = $1`,
-      [jobId]
-    );
-
+           FROM jobs
+           WHERE id = $1`, [jobId]);
     const job = preCheck.rows[0];
 
     if (!job) throw new NotFoundError(`No job: ${jobId}`);
 
     const preCheck2 = await db.query(
       `SELECT username
-      FROM users
-      WHERE username = $1`,
-      [username]
-    );
-
+           FROM users
+           WHERE username = $1`, [username]);
     const user = preCheck2.rows[0];
 
-    if (!user) throw new NotFoundError(`No user: ${username}`);
+    if (!user) throw new NotFoundError(`No username: ${username}`);
 
     await db.query(
       `INSERT INTO applications (job_id, username)
-      VALUES ($1, $1)`,
-      [jobId, username]
-    );
+           VALUES ($1, $2)`,
+      [jobId, username]);
   }
 }
 

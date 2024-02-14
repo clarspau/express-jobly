@@ -23,7 +23,6 @@ const router = new express.Router();
  * Returns { handle, name, description, numEmployees, logoUrl }
  *
  * Authorization required: admin
- * creating, updating, and deleting companies should only be possible for admin users
  */
 
 router.post("/", ensureAdmin, async function (req, res, next) {
@@ -53,34 +52,24 @@ router.post("/", ensureAdmin, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
-  // Extract query parameters from the HTTP request
-  const query = req.query;
-
-  // Convert minEmployees and maxEmployees to integers if they are defined as strings
-  if (query.minEmployees !== undefined) query.minEmployees = +query.minEmployees;
-  if (query.maxEmployees !== undefined) query.maxEmployees = +query.maxEmployees;
+  const q = req.query;
+  // arrive as strings from querystring, but we want as ints
+  if (q.minEmployees !== undefined) q.minEmployees = +q.minEmployees;
+  if (q.maxEmployees !== undefined) q.maxEmployees = +q.maxEmployees;
 
   try {
-    // Validate the query parameters against the companySearchSchema
-    const validators = jsonschema.validate(query, companySearchSchema);
-
-    // If validation fails, throw a BadRequestError with the validation errors
-    if (!validators.valid) {
-      const errs = validators.errors.map(e => e.stack);
+    const validator = jsonschema.validate(q, companySearchSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map(e => e.stack);
       throw new BadRequestError(errs);
     }
 
-    // Retrieve companies from the database based on the provided query parameters
-    const companies = await Company.findAll(query);
-
-    // Return the list of companies as a JSON response
+    const companies = await Company.findAll(q);
     return res.json({ companies });
   } catch (err) {
-    // Pass any caught errors to the error-handling middleware
     return next(err);
   }
 });
-
 
 /** GET /[handle]  =>  { company }
  *
