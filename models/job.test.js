@@ -1,58 +1,45 @@
 "use strict";
 
+const { NotFoundError, BadRequestError } = require("../expressError");
 const db = require("../db.js");
 const Job = require("./job.js");
-const { NotFoundError, BadRequestError } = require("../expressError");
 const {
      commonBeforeAll,
      commonBeforeEach,
      commonAfterEach,
      commonAfterAll,
-     testJobIds
+     testJobIds,
 } = require("./_testCommon");
 
-// Setup before and after functions to run for all tests
 beforeAll(commonBeforeAll);
 beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
 
-
-/** 
- * Test the create method of the Job class 
- */
+/************************************** create */
 
 describe("create", function () {
-     const newJob = {
-          title: "New Test",
+     let newJob = {
           companyHandle: "c1",
-          salary: 150,
+          title: "Test",
+          salary: 100,
           equity: "0.1",
      };
 
-     // Test creating a new job
      test("works", async function () {
           let job = await Job.create(newJob);
           expect(job).toEqual({
+               ...newJob,
                id: expect.any(Number),
-               title: "New Test",
-               companyHandle: "c1",
-               salary: 150,
-               equity: "0.1",
           });
      });
 });
 
+/************************************** findAll */
 
-/** 
- * Test the findAll method of the Job class with different filters.
- */
 describe("findAll", function () {
-     // Test to ensure findAll works without any filters
      test("works: no filter", async function () {
-          // Call findAll method without any filters
           let jobs = await Job.findAll();
-          // Expect the returned jobs to match the expected array of jobs
           expect(jobs).toEqual([
                {
                     id: testJobIds[0],
@@ -89,11 +76,8 @@ describe("findAll", function () {
           ]);
      });
 
-     // Test to ensure findAll works with a minimum salary filter
      test("works: by min salary", async function () {
-          // Call findAll method with a minimum salary filter of 250
           let jobs = await Job.findAll({ minSalary: 250 });
-          // Expect the returned jobs to match the expected array of jobs
           expect(jobs).toEqual([
                {
                     id: testJobIds[2],
@@ -106,11 +90,8 @@ describe("findAll", function () {
           ]);
      });
 
-     // Test to ensure findAll works with an equity filter
      test("works: by equity", async function () {
-          // Call findAll method with an equity filter set to true
           let jobs = await Job.findAll({ hasEquity: true });
-          // Expect the returned jobs to match the expected array of jobs
           expect(jobs).toEqual([
                {
                     id: testJobIds[0],
@@ -131,11 +112,8 @@ describe("findAll", function () {
           ]);
      });
 
-     // Test to ensure findAll works with both a minimum salary and equity filter
      test("works: by min salary & equity", async function () {
-          // Call findAll method with both a minimum salary filter of 150 and an equity filter set to true
           let jobs = await Job.findAll({ minSalary: 150, hasEquity: true });
-          // Expect the returned jobs to match the expected array of jobs
           expect(jobs).toEqual([
                {
                     id: testJobIds[1],
@@ -148,11 +126,8 @@ describe("findAll", function () {
           ]);
      });
 
-     // Test to ensure findAll works with a title filter
      test("works: by name", async function () {
-          // Call findAll method with a title filter set to "ob1"
           let jobs = await Job.findAll({ title: "ob1" });
-          // Expect the returned jobs to match the expected array of jobs
           expect(jobs).toEqual([
                {
                     id: testJobIds[0],
@@ -166,23 +141,16 @@ describe("findAll", function () {
      });
 });
 
-
-
-/** 
- * Test the get method of the Job class 
- */
+/************************************** get */
 
 describe("get", function () {
      test("works", async function () {
-          // Call get method with the ID of the first test job
           let job = await Job.get(testJobIds[0]);
-
           expect(job).toEqual({
                id: testJobIds[0],
                title: "Job1",
                salary: 100,
                equity: "0.1",
-               // Expect the company details to be included in the job object
                company: {
                     handle: "c1",
                     name: "C1",
@@ -195,9 +163,7 @@ describe("get", function () {
 
      test("not found if no such job", async function () {
           try {
-               // Call get method with an invalid job ID (0)
                await Job.get(0);
-               // If get method doesn't throw an error, fail the test
                fail();
           } catch (err) {
                expect(err instanceof NotFoundError).toBeTruthy();
@@ -205,20 +171,14 @@ describe("get", function () {
      });
 });
 
-
-
-/** 
- * Test the update method of the Job class 
- */
+/************************************** update */
 
 describe("update", function () {
-     const updateData = {
+     let updateData = {
           title: "New",
-          salary: 200,
-          equity: "0.2",
+          salary: 500,
+          equity: "0.5",
      };
-
-     // Test updating a job
      test("works", async function () {
           let job = await Job.update(testJobIds[0], updateData);
           expect(job).toEqual({
@@ -228,8 +188,7 @@ describe("update", function () {
           });
      });
 
-     // Test for case when no job is found for updating
-     test("not found if there is no such job", async function () {
+     test("not found if no such job", async function () {
           try {
                await Job.update(0, {
                     title: "test",
@@ -240,7 +199,6 @@ describe("update", function () {
           }
      });
 
-     // Test for case when update data is empty
      test("bad request with no data", async function () {
           try {
                await Job.update(testJobIds[0], {});
@@ -251,13 +209,9 @@ describe("update", function () {
      });
 });
 
-
-/** 
- * Test the remove method of the Job class 
- */
+/************************************** remove */
 
 describe("remove", function () {
-     // Test removing a job
      test("works", async function () {
           await Job.remove(testJobIds[0]);
           const res = await db.query(
@@ -265,8 +219,7 @@ describe("remove", function () {
           expect(res.rows.length).toEqual(0);
      });
 
-     // Test for case when no job is found for removing
-     test("not found if there is no such job", async function () {
+     test("not found if no such job", async function () {
           try {
                await Job.remove(0);
                fail();

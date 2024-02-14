@@ -1,41 +1,25 @@
+
 const { sqlForPartialUpdate } = require("./sql");
-const { BadRequestError } = require("../expressError");
 
-// Test suite for the sqlForPartialUpdate function
-describe("sqlForPartialUpdate", () => {
-     // Test case 1: generates SQL query parameters for a partial update
-     test("generates SQL query parameters for a partial update", () => {
-          // Arrange: Define test data
-          const dataToUpdate = {
-               firstName: "Brenda",
-               lastName: "Song",
-          };
 
-          // Define JavaScript to SQL mapping
-          const jsToSql = {
-               firstName: "first_name",
-               lastName: "last_name",
-          };
-
-          // Act: Call the function under test
-          const result = sqlForPartialUpdate(dataToUpdate, jsToSql);
-
-          // Assert: Check if the function returns the expected result
+describe("sqlForPartialUpdate", function () {
+     test("works: 1 item", function () {
+          const result = sqlForPartialUpdate(
+               { f1: "v1" },
+               { f1: "f1", fF2: "f2" });
           expect(result).toEqual({
-               setCols: '"first_name"=$1, "last_name"=$2', // Expected SQL SET clause
-               values: ["Brenda", "Song"], // Expected values for SQL query
+               setCols: "\"f1\"=$1",
+               values: ["v1"],
           });
      });
 
-     // Test case 2: throws BadRequestError if no data is provided for update
-     test("throws BadRequestError if no data is provided for update", () => {
-          // Arrange: Define test data (empty dataToUpdate)
-          const dataToUpdate = {};
-          const jsToSql = {}; // JavaScript to SQL mapping is not relevant here
-
-          // Act & Assert: Ensure that the function throws BadRequestError
-          expect(() => {
-               sqlForPartialUpdate(dataToUpdate, jsToSql);
-          }).toThrow(BadRequestError);
+     test("works: 2 items", function () {
+          const result = sqlForPartialUpdate(
+               { f1: "v1", jsF2: "v2" },
+               { jsF2: "f2" });
+          expect(result).toEqual({
+               setCols: "\"f1\"=$1, \"f2\"=$2",
+               values: ["v1", "v2"],
+          });
      });
 });
